@@ -18,8 +18,10 @@ const {
 
 const router = Router();
 
+//Obtener la lista de los hospitales
 router.get('/', getHospitales);
 
+//Crear Hospital
 router.post('/', [
         validarJWT,
         check("nombre", "El nombre del hospital es necesario").not().isEmpty(),
@@ -28,13 +30,18 @@ router.post('/', [
     crearHospital
 );
 
+//Actualizar hospital
 router.put('/:id', [
-
+        validarJWT,
+        check("nombre", "El nombre del hospital es necesario").not().isEmpty(),
+        validarCampos
     ],
     actualizarHospital
 );
 
+//Borrar hospital
 router.delete('/:id',
+    validarJWT,
     borrarHospital
 );
 
