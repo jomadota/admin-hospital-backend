@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const Usuario = require('../models/usuario');
 const { generarJWT } = require('../helpers/jwt');
 const { googleVerify } = require('../helpers/google-verify');
+const { getMenuFront } = require('../helpers/menu-front');
 
 
 const login = async(req, res = response) => {
@@ -36,8 +37,9 @@ const login = async(req, res = response) => {
 
         res.json({
             ok: true,
-            token
-        })
+            token,
+            menu: getMenuFront(usuarioDB.role)
+        });
 
     } catch (error) {
         console.log(error);
@@ -51,32 +53,25 @@ const login = async(req, res = response) => {
 
 const googleSingIn = async(req, res = response) => {
 
-    const googleToken = req.body.token;
-
     try {
-
-        const { name, email, picture } = await googleVerify(googleToken);
+        const { email, name, picture } = await googleVerify(req.body.token);
 
         const usuarioDB = await Usuario.findOne({ email });
         let usuario;
 
         if (!usuarioDB) {
-            //si no esxiste el usuario, se crea uno
             usuario = new Usuario({
                 nombre: name,
                 email: email,
-                password: "@@@",
+                password: "@@",
                 img: picture,
                 google: true
             })
         } else {
-            //el usurio si existe
             usuario = usuarioDB;
             usuario.google = true;
-            // usuario.password = "@@@";
         }
-
-        //Guardar el usuario en base de datos
+        //Guardar Usuario
         await usuario.save();
 
         // Generar el TOKEN - JWT
@@ -84,17 +79,22 @@ const googleSingIn = async(req, res = response) => {
 
         res.json({
             ok: true,
+            //googleUser
+            email,
+            name,
+            picture,
             token
         });
 
     } catch (error) {
-
+        console.log(error);
         res.status(401).json({
             ok: false,
-            msg: "Token no es correcto"
+            msg: "El Token de Google no es correcto"
         });
 
     }
+
 
 }
 
@@ -111,16 +111,11 @@ const renewToken = async(req, res = response) => {
     res.json({
         ok: true,
         token,
-        usuario
+        usuario,
+        menu: getMenuFront(usuario.role)
     });
 
 }
-
-
-
-
-
-
 
 module.exports = {
     login,
